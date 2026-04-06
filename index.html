@@ -23,30 +23,38 @@
             border-radius: 40px;
             overflow: hidden;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* Movable items (Heroes and Assets) */
-        .movable {
+        /* Movable Hero - Clean, no blue frame */
+        #hero-container {
             position: absolute;
             cursor: move;
             user-select: none;
             touch-action: none;
             z-index: 40;
-            width: 200px;
-            height: 250px;
+            width: 320px;
+            height: 400px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border: 2px solid transparent;
+            transform-origin: center center;
         }
-        
-        .movable.selected {
-            border: 2px dashed #06b6d4;
-            border-radius: 20px;
-            background: rgba(6, 182, 212, 0.1);
-        }
+        #hero-container * { pointer-events: none; } 
 
-        .movable * { pointer-events: none; } /* Prevents child parts from blocking the drag */
+        /* Movable Assets */
+        .asset-sticker {
+            position: absolute;
+            cursor: move;
+            z-index: 50;
+            width: 120px;
+            height: 120px;
+            user-select: none;
+            touch-action: none;
+        }
+        .asset-sticker * { pointer-events: none; }
 
         .speech-bubble {
             position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
@@ -97,71 +105,73 @@
     </nav>
 
     <main class="max-w-7xl mx-auto p-4">
-        <!-- STUDIO TAB -->
         <div id="content-studio" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Sidebar -->
             <div class="lg:col-span-3 space-y-6 bg-slate-900 p-5 rounded-[40px] border border-slate-800 shadow-2xl h-fit">
                 
-                <!-- 1. Characters -->
                 <section>
                     <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-cyan-400 font-black text-xs uppercase flex items-center gap-2"><i data-lucide="user-plus" class="w-3 h-3"></i> 1. Characters</h3>
-                        <button onclick="document.getElementById('hero-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700 hover:text-white">Add Photo</button>
+                        <h3 class="text-cyan-400 font-black text-xs uppercase flex items-center gap-2"><i data-lucide="user" class="w-3 h-3"></i> 1. The Hero</h3>
+                        <button onclick="document.getElementById('hero-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700 hover:text-white">Import Photo</button>
                         <input id="hero-upload" type="file" class="hidden" accept="image/*" onchange="handleHeroUpload(event)">
                     </div>
                     <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" id="hero-gallery"></div>
                 </section>
 
-                <!-- 2. Background -->
                 <section class="bg-black/20 p-4 rounded-3xl border border-slate-800 space-y-4">
                     <div class="flex justify-between items-center">
                         <h3 class="text-cyan-400 font-black text-xs uppercase flex items-center gap-2"><i data-lucide="image" class="w-3 h-3"></i> 2. Background</h3>
-                        <button onclick="document.getElementById('bg-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700"><i data-lucide="upload" class="w-3 h-3"></i></button>
+                        <button onclick="document.getElementById('bg-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700 flex items-center gap-1">
+                            <i data-lucide="upload" class="w-3 h-3"></i> Upload
+                        </button>
                         <input id="bg-upload" type="file" class="hidden" accept="image/*" onchange="handleBgUpload(event)">
                     </div>
                     <div class="flex gap-2 flex-wrap" id="color-palette"></div>
                 </section>
 
-                <!-- 3. Assets -->
                 <section class="bg-black/20 p-4 rounded-3xl border border-slate-800 space-y-3">
                     <div class="flex justify-between items-center">
                         <h3 class="text-cyan-400 font-black text-xs uppercase flex items-center gap-2"><i data-lucide="plus-square" class="w-3 h-3"></i> 3. Assets</h3>
-                        <button onclick="document.getElementById('asset-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700"><i data-lucide="upload" class="w-3 h-3"></i></button>
+                        <button onclick="document.getElementById('asset-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700 flex items-center gap-1">
+                            <i data-lucide="upload" class="w-3 h-3"></i> Custom
+                        </button>
                         <input id="asset-upload" type="file" class="hidden" accept="image/*" onchange="handleAssetUpload(event)">
                     </div>
                     <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" id="asset-library"></div>
                 </section>
 
-                <!-- 4. Selected Item Controls -->
                 <section class="space-y-4 border-t border-slate-800 pt-4">
-                    <h3 class="text-cyan-400 font-black text-xs uppercase">4. Selection Controls</h3>
-                    <div class="flex gap-2 mb-2">
-                        <button onclick="flipSelected()" class="bg-slate-800 p-2 rounded-xl flex-1 flex justify-center hover:bg-slate-700"><i data-lucide="flip-horizontal" class="w-4 h-4"></i></button>
-                        <button onclick="deleteSelected()" class="bg-red-900/20 text-red-500 p-2 rounded-xl flex-1 flex justify-center border border-red-900/50 hover:bg-red-900/40"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-cyan-400 font-black text-xs uppercase">4. Hero Controls</h3>
+                        <div class="flex gap-2">
+                            <button onclick="flipHero()" class="bg-slate-800 p-2 rounded-xl" title="Flip Hero"><i data-lucide="flip-horizontal" class="w-4 h-4"></i></button>
+                            <button onclick="resetHero()" class="bg-slate-800 p-2 rounded-xl" title="Center Hero"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
+                        </div>
                     </div>
                     <div class="space-y-1">
                         <div class="flex justify-between text-[8px] uppercase font-bold text-slate-500"><span>Size</span></div>
-                        <input type="range" id="scale-slider" min="0.1" max="4" step="0.1" value="1" oninput="updateSelectedScale(this.value)">
+                        <input type="range" id="scale-slider" min="0.1" max="4" step="0.1" value="1" oninput="updateHeroScale(this.value)">
                         <div class="flex justify-between text-[8px] uppercase font-bold text-slate-500"><span>Rotate</span></div>
-                        <input type="range" id="rotate-slider" min="-180" max="180" step="1" value="0" oninput="updateSelectedRotation(this.value)">
+                        <input type="range" id="rotate-slider" min="-180" max="180" step="1" value="0" oninput="updateHeroRotation(this.value)">
                     </div>
                 </section>
 
                 <section>
-                    <h3 class="text-cyan-400 font-black text-xs uppercase mb-2">Dialogue</h3>
-                    <textarea id="dialogue-input" oninput="updateSpeech(this.value)" placeholder="SAY SOMETHING..." class="w-full bg-black border-2 border-slate-800 rounded-2xl p-3 text-sm font-black uppercase text-white outline-none h-16 resize-none"></textarea>
-                    <button onclick="speakDialogue()" class="w-full mt-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase py-2 rounded bg-slate-800 border border-slate-700 text-slate-300"><i data-lucide="volume-2" class="w-4 h-4"></i> Speak</button>
+                    <h3 class="text-cyan-400 font-black text-xs uppercase mb-2">Script</h3>
+                    <textarea id="dialogue-input" oninput="updateSpeech(this.value)" placeholder="WHAM! POW! SAY SOMETHING..." class="w-full bg-black border-2 border-slate-800 rounded-2xl p-3 text-sm font-black uppercase text-white outline-none h-16 resize-none"></textarea>
+                    <button onclick="speakDialogue()" class="w-full mt-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase py-2 rounded bg-slate-800 border border-slate-700 text-slate-300"><i data-lucide="volume-2" class="w-4 h-4"></i> Speak Lines</button>
                 </section>
 
                 <button onclick="generateIdea()" class="w-full bg-slate-800 py-3 rounded-2xl text-[10px] font-black uppercase border border-slate-700">💡 Idea Engine</button>
                 <button onclick="takeSnap()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 py-4 rounded-2xl text-xl font-black uppercase shadow-xl active:scale-95 transition-all"><i data-lucide="camera" class="inline w-6 h-6 mr-2"></i> SNAP PANEL!</button>
             </div>
 
-            <!-- Viewport Area -->
             <div class="lg:col-span-9 flex flex-col gap-6">
                 <div id="viewport-frame">
                     <div id="speech-bubble" class="speech-bubble"></div>
-                    <div id="movables-layer" class="absolute inset-0"></div>
+                    <!-- Single Hero -->
+                    <div id="hero-container" onpointerdown="handleHeroPointerDown(event)"></div>
+                    <!-- Asset Layer -->
+                    <div id="assets-layer" class="absolute inset-0 pointer-events-none"></div>
                     <div class="absolute bottom-8 right-10 opacity-10 font-black italic text-6xl text-white pointer-events-none uppercase font-comic">KIDOVATE</div>
                     <div id="lore-popup" class="absolute bottom-6 left-6 right-6 bg-cyan-500 text-black p-4 rounded-3xl border-4 border-black shadow-2xl hidden flex justify-between items-center z-[101]">
                         <p id="lore-text" class="font-black text-xs uppercase italic pr-4"></p>
@@ -173,9 +183,9 @@
                     <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
                         <h4 class="font-black uppercase tracking-widest text-sm text-emerald-500 italic">COMIC STRIP REEL</h4>
                         <div class="flex gap-2">
-                            <button onclick="resetEverything()" class="text-[10px] font-black text-red-500 uppercase px-4 py-3 hover:bg-red-500/10 rounded-2xl transition-colors">Reset Studio</button>
-                            <button onclick="shareComic()" class="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-2xl text-[10px] font-black uppercase shadow-xl flex items-center gap-2 transition-all active:scale-95">
-                                <i data-lucide="share-2" class="w-4 h-4"></i> Share Story
+                            <button onclick="resetEverything()" class="text-[10px] font-black text-red-500 uppercase px-4 py-3 hover:bg-red-500/10 rounded-2xl transition-colors">Reset Stage</button>
+                            <button onclick="downloadComic()" class="bg-emerald-600 hover:bg-emerald-500 px-8 py-3 rounded-2xl text-[10px] font-black uppercase shadow-xl flex items-center gap-3 active:scale-95">
+                                <i data-lucide="download" class="w-4 h-4"></i> Save Full Comic
                             </button>
                         </div>
                     </div>
@@ -186,15 +196,13 @@
             </div>
         </div>
 
-        <!-- GALLERY TAB -->
         <div id="content-brag" class="hidden-tab py-24 text-center space-y-12 animate-in fade-in">
             <h2 class="text-7xl font-black text-white font-comic uppercase tracking-tighter">The Gallery</h2>
             <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                <div class="col-span-full bg-slate-900 border-4 border-dashed border-slate-800 rounded-[60px] p-20 opacity-30 italic font-black uppercase text-2xl text-slate-600">Coming Soon... Your Comic Here!</div>
+                <div class="col-span-full bg-slate-900 border-4 border-dashed border-slate-800 rounded-[60px] p-20 opacity-30 italic font-black uppercase text-2xl text-slate-600">Your Masterpieces go here!</div>
             </div>
         </div>
 
-        <!-- ABOUT TAB -->
         <div id="content-about" class="hidden-tab max-w-3xl mx-auto py-16 bg-slate-900 p-12 rounded-[60px] border border-slate-800 shadow-2xl space-y-6">
             <h2 id="about-title" class="text-6xl font-black italic text-white mb-8 uppercase font-comic"></h2>
             <p id="about-desc" class="text-slate-300 font-bold leading-loose text-lg"></p>
@@ -230,116 +238,123 @@
             { id: 'pow', svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#ef4444" stroke="black" stroke-width="3"/><text x="50" y="58" text-anchor="middle" font-family="Bangers" font-size="22" fill="white" font-weight="bold">POW</text></svg>` }
         ];
 
-        let selectedEl = null;
-        let panels = [];
-        let dragOffset = { x: 0, y: 0 };
+        // --- STATE ---
+        let heroState = { scale: 1, rotation: 0, flipped: false, posX: 0, posY: 0 };
         let activePointerId = null;
-        let highestZ = 100;
+        let activeSticker = null;
+        let dragOffset = { x: 0, y: 0 };
+        let panels = [];
 
         function init() {
             lucide.createIcons();
             loadAbout();
             setupColorPalette();
             setupAssetLibrary();
+            setHeroContent(HERO_POSES[0].svg);
             
-            // Global move/up handlers
-            window.addEventListener('pointermove', handlePointerMove);
-            window.addEventListener('pointerup', handlePointerUp);
+            window.addEventListener('pointermove', handleGlobalPointerMove);
+            window.addEventListener('pointerup', handleGlobalPointerUp);
         }
 
-        // --- NAVIGATION ---
+        // --- TABS ---
         function switchTab(id) {
             document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-' + id).classList.add('active');
-            ['studio', 'brag', 'about'].forEach(t => document.getElementById('content-' + t).classList.add('hidden-tab'));
+            ['studio', 'brag', 'about'].forEach(t => {
+                const el = document.getElementById('content-' + t);
+                if (el) el.classList.add('hidden-tab');
+            });
             document.getElementById('content-' + id).classList.remove('hidden-tab');
         }
 
-        // --- DRAGGING CORE ---
-        function onMovablePointerDown(e) {
-            const el = e.currentTarget;
-            selectElement(el);
-            
-            // Bring to front
-            highestZ++;
-            el.style.zIndex = highestZ;
-
-            activePointerId = e.pointerId;
-            const rect = el.getBoundingClientRect();
-            dragOffset.x = e.clientX - rect.left;
-            dragOffset.y = e.clientY - rect.top;
-            
-            el.setPointerCapture(e.pointerId);
-            e.stopPropagation();
-        }
-
-        function handlePointerMove(e) {
-            if (!selectedEl || activePointerId === null || e.pointerId !== activePointerId) return;
-            
-            const viewport = document.getElementById('viewport-frame').getBoundingClientRect();
-            const x = e.clientX - viewport.left - dragOffset.x;
-            const y = e.clientY - viewport.top - dragOffset.y;
-            
-            selectedEl.style.left = x + 'px';
-            selectedEl.style.top = y + 'px';
-        }
-
-        function handlePointerUp(e) { activePointerId = null; }
-
-        function selectElement(el) {
-            if (selectedEl) selectedEl.classList.remove('selected');
-            selectedEl = el;
-            selectedEl.classList.add('selected');
-            
-            // Sync UI Sliders
-            const s = parseFloat(el.dataset.scale || 1);
-            const r = parseInt(el.dataset.rotate || 0);
-            document.getElementById('scale-slider').value = s;
-            document.getElementById('rotate-slider').value = r;
-        }
-
-        // --- CREATION ---
-        function createMovable(content, type = 'hero') {
-            const layer = document.getElementById('movables-layer');
-            const el = document.createElement('div');
-            el.className = "movable";
-            if (type === 'asset') el.style.width = "120px", el.style.height = "120px";
-            
-            el.innerHTML = content;
-            el.dataset.scale = 1;
-            el.dataset.rotate = 0;
-            el.dataset.flipped = "false";
-            
-            el.style.left = "30%";
-            el.style.top = "30%";
-            
-            el.onpointerdown = onMovablePointerDown;
-            el.ondblclick = () => el.remove();
-            
-            layer.appendChild(el);
-            selectElement(el);
-            applyTransform(el);
+        // --- HERO LOGIC ---
+        function setHeroContent(content) {
+            document.getElementById('hero-container').innerHTML = content;
+            resetHero();
         }
 
         function handleHeroUpload(e) {
             const f = e.target.files[0];
-            if (!f) return;
-            const r = new FileReader();
-            r.onload = (ev) => createMovable(`<img src="${ev.target.result}" class="max-w-full max-h-full drop-shadow-2xl">`);
-            r.readAsDataURL(f);
+            if(!f) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => setHeroContent(`<img src="${ev.target.result}" class="max-w-full max-h-full drop-shadow-2xl">`);
+            reader.readAsDataURL(f);
+        }
+
+        function resetHero() {
+            heroState = { scale: 1, rotation: 0, flipped: false, posX: 0, posY: 0 };
+            document.getElementById('scale-slider').value = 1;
+            document.getElementById('rotate-slider').value = 0;
+            applyHeroTransform();
+        }
+
+        function updateHeroScale(v) { heroState.scale = v; applyHeroTransform(); }
+        function updateHeroRotation(v) { heroState.rotation = v; applyHeroTransform(); }
+        function flipHero() { heroState.flipped = !heroState.flipped; applyHeroTransform(); }
+
+        function applyHeroTransform() {
+            const el = document.getElementById('hero-container');
+            const f = heroState.flipped ? -1 : 1;
+            el.style.transform = `translate(${heroState.posX}px, ${heroState.posY}px) scale(${heroState.scale * f}, ${heroState.scale}) rotate(${heroState.rotation}deg)`;
+        }
+
+        // --- DRAGGING CORE ---
+        function handleHeroPointerDown(e) {
+            activePointerId = e.pointerId;
+            dragOffset.x = e.clientX - heroState.posX;
+            dragOffset.y = e.clientY - heroState.posY;
+            e.currentTarget.setPointerCapture(e.pointerId);
+            e.stopPropagation();
+        }
+
+        function handleGlobalPointerMove(e) {
+            if (activePointerId !== null && e.pointerId === activePointerId) {
+                heroState.posX = e.clientX - dragOffset.x;
+                heroState.posY = e.clientY - dragOffset.y;
+                applyHeroTransform();
+            } else if (activeSticker) {
+                const viewport = document.getElementById('viewport-frame').getBoundingClientRect();
+                activeSticker.style.left = (e.clientX - viewport.left - dragOffset.x) + 'px';
+                activeSticker.style.top = (e.clientY - viewport.top - dragOffset.y) + 'px';
+            }
+        }
+
+        function handleGlobalPointerUp(e) {
+            activePointerId = null;
+            activeSticker = null;
+        }
+
+        // --- ASSETS & BACKGROUND ---
+        function createSticker(content) {
+            const layer = document.getElementById('viewport-frame');
+            const el = document.createElement('div');
+            el.className = "asset-sticker";
+            el.style.left = "40%"; el.style.top = "40%";
+            el.innerHTML = content;
+            
+            el.onpointerdown = (e) => {
+                activeSticker = el;
+                const rect = el.getBoundingClientRect();
+                dragOffset.x = e.clientX - rect.left;
+                dragOffset.y = e.clientY - rect.top;
+                el.setPointerCapture(e.pointerId);
+                e.stopPropagation();
+            };
+            el.ondblclick = () => el.remove();
+            layer.appendChild(el);
         }
 
         function handleAssetUpload(e) {
             const f = e.target.files[0];
-            if (!f) return;
+            if(!f) return;
             const r = new FileReader();
-            r.onload = (ev) => createMovable(`<img src="${ev.target.result}" class="max-w-full max-h-full object-contain">`, 'asset');
+            r.onload = (ev) => createSticker(`<img src="${ev.target.result}" class="w-full h-full object-contain">`);
             r.readAsDataURL(f);
         }
 
         function handleBgUpload(e) {
             const f = e.target.files[0];
-            if (!f) return;
+            if(!f) return;
             const r = new FileReader();
             r.onload = (ev) => {
                 const stage = document.getElementById('viewport-frame');
@@ -348,24 +363,6 @@
                 stage.style.backgroundPosition = "center";
             };
             r.readAsDataURL(f);
-        }
-
-        // --- CONTROLS ---
-        function updateSelectedScale(v) { if(selectedEl) { selectedEl.dataset.scale = v; applyTransform(selectedEl); } }
-        function updateSelectedRotation(v) { if(selectedEl) { selectedEl.dataset.rotate = v; applyTransform(selectedEl); } }
-        function flipSelected() { 
-            if(selectedEl) { 
-                selectedEl.dataset.flipped = selectedEl.dataset.flipped === "true" ? "false" : "true"; 
-                applyTransform(selectedEl); 
-            } 
-        }
-        function deleteSelected() { if(selectedEl) { selectedEl.remove(); selectedEl = null; } }
-
-        function applyTransform(el) {
-            const s = el.dataset.scale;
-            const r = el.dataset.rotate;
-            const f = el.dataset.flipped === "true" ? -1 : 1;
-            el.style.transform = `scale(${s * f}, ${s}) rotate(${r}deg)`;
         }
 
         // --- ACTIONS ---
@@ -387,47 +384,36 @@
             const f = document.getElementById('viewport-frame');
             const c = await html2canvas(f, { backgroundColor: null, scale: 2 });
             const img = c.toDataURL("image/png");
-            
             const reel = document.getElementById('strip-reel-container');
             const empty = document.getElementById('empty-msg');
             if (empty) empty.remove();
-            
             const div = document.createElement('div');
             div.className = "panel-thumb";
             div.innerHTML = `<img src="${img}" class="w-full h-full object-cover">`;
             reel.appendChild(div);
             panels.push(img);
-            
             document.getElementById('dialogue-input').value = '';
             updateSpeech('');
         }
 
-        async function shareComic() {
+        async function downloadComic() {
             if (panels.length === 0) return;
             const reel = document.getElementById('strip-reel-container');
             const c = await html2canvas(reel, { backgroundColor: '#000000', scale: 2 });
-            const dataUrl = c.toDataURL("image/png");
-            const blob = await (await fetch(dataUrl)).blob();
-            const file = new File([blob], 'kidovate-comic.png', { type: 'image/png' });
-
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({ files: [file], title: 'My Kidovate Comic!' });
-            } else {
-                const l = document.createElement('a');
-                l.download = `Kidovate_Story.png`;
-                l.href = dataUrl;
-                l.click();
-            }
+            const link = document.createElement('a');
+            link.download = `Kidovate_Story.png`;
+            link.href = c.toDataURL("image/png");
+            link.click();
         }
 
         function resetEverything() {
-            if (confirm("Reset everything? Stage, background, and reel will be cleared.")) {
+            if (confirm("Reset everything? Stage and Reel will be cleared.")) {
                 panels = [];
                 document.getElementById('strip-reel-container').innerHTML = '<div id="empty-msg" class="w-full py-16 text-center border-4 border-dashed border-slate-800 rounded-[40px] opacity-20 uppercase font-black italic">Snap your first panel!</div>';
-                document.getElementById('movables-layer').innerHTML = '';
                 document.getElementById('viewport-frame').style.backgroundImage = 'none';
                 document.getElementById('viewport-frame').style.backgroundColor = '#1e293b';
-                selectedEl = null;
+                document.querySelectorAll('.asset-sticker').forEach(s => s.remove());
+                resetHero();
             }
         }
 
@@ -437,9 +423,9 @@
             document.getElementById('lore-text').innerText = m;
             document.getElementById('lore-popup').classList.remove('hidden');
         }
-
         function closeLore() { document.getElementById('lore-popup').classList.add('hidden'); }
 
+        // --- UI FILL ---
         function setupColorPalette() {
             const container = document.getElementById('color-palette');
             ['#1e293b', '#000000', '#ffffff', '#ffcc00', '#ef4444', '#06b6d4'].forEach(c => {
@@ -462,41 +448,26 @@
                 const b = document.createElement('button');
                 b.className = "shrink-0 w-16 h-16 rounded-2xl border-2 border-slate-800 p-1 bg-black hover:border-cyan-500";
                 b.innerHTML = p.svg;
-                b.onclick = () => createMovable(p.svg);
+                b.onclick = () => setHeroContent(p.svg);
                 gallery.appendChild(b);
             });
             ASSETS.forEach(a => {
                 const b = document.createElement('button');
                 b.className = "shrink-0 w-12 h-12 rounded-xl bg-black border border-slate-800 p-2 hover:border-cyan-500";
                 b.innerHTML = a.svg;
-                b.onclick = () => createMovable(a.svg, 'asset');
+                b.onclick = () => createSticker(a.svg);
                 lib.appendChild(b);
             });
         }
 
         function loadAbout() {
-            document.getElementById('about-title').innerText = ADMIN_CONFIG.about.title;
-            document.getElementById('about-desc').innerText = ADMIN_CONFIG.about.description;
-            document.getElementById('about-mission').innerText = ADMIN_CONFIG.about.mission;
+            const a = ADMIN_CONFIG.about;
+            document.getElementById('about-title').innerText = a.title;
+            document.getElementById('about-desc').innerText = a.description;
+            document.getElementById('about-mission').innerText = a.mission;
         }
 
         window.onload = init;
     </script>
 </body>
 </html>
-
-                        
-
-                
-
-           
-          
-
-            
-
-           
-            
-          
-       
-        
-       
