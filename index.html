@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kidovate | Dummy 13 Comic Studio</title>
     <!-- Dependencies -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -34,12 +34,11 @@
             cursor: move;
             user-select: none;
             z-index: 40;
+            width: 320px;
+            height: 400px;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 320px;
-            height: 400px;
-            pointer-events: auto;
         }
 
         .speech-bubble {
@@ -64,7 +63,7 @@
         input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: #06b6d4; margin-top: -6px; border: 2px solid white; }
 
         .btn-tab.active { background-color: #06b6d4; color: black; box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
-        .hidden-tab { display: none; }
+        .hidden-tab { display: none !important; }
     </style>
 </head>
 <body class="selection:bg-cyan-500/30">
@@ -92,12 +91,11 @@
     <main class="max-w-7xl mx-auto p-4">
         <!-- STUDIO TAB -->
         <div id="content-studio" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Sidebar -->
             <div class="lg:col-span-3 space-y-6 bg-slate-900 p-5 rounded-[40px] border border-slate-800 shadow-2xl h-fit">
                 <section>
                     <div class="flex justify-between items-center mb-3">
                         <h3 class="text-cyan-400 font-black text-xs uppercase flex items-center gap-2"><i data-lucide="plus" class="w-3 h-3"></i> 1. Hero</h3>
-                        <button onclick="document.getElementById('hero-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700">Upload Own</button>
+                        <button onclick="document.getElementById('hero-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700">Upload</button>
                         <input id="hero-upload" type="file" class="hidden" accept="image/*" onchange="handleHeroUpload(event)">
                     </div>
                     <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" id="hero-gallery"></div>
@@ -106,10 +104,7 @@
                 <section class="bg-black/20 p-4 rounded-3xl border border-slate-800 space-y-4">
                     <div class="flex justify-between items-center">
                         <h3 class="text-cyan-400 font-black text-xs uppercase">2. Background</h3>
-                        <div class="flex gap-1">
-                            <button id="btn-bg-clear" onclick="clearBg()" class="hidden text-[9px] font-black uppercase bg-red-900/40 text-red-400 px-2 py-1 rounded border border-red-800"><i data-lucide="x" class="w-3 h-3"></i></button>
-                            <button onclick="document.getElementById('bg-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700"><i data-lucide="upload" class="w-3 h-3"></i></button>
-                        </div>
+                        <button onclick="document.getElementById('bg-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700"><i data-lucide="upload" class="w-3 h-3"></i></button>
                         <input id="bg-upload" type="file" class="hidden" accept="image/*" onchange="handleBgUpload(event)">
                     </div>
                     <div class="flex gap-2 flex-wrap" id="color-palette"></div>
@@ -122,6 +117,7 @@
                         <input id="asset-upload" type="file" class="hidden" accept="image/*" onchange="handleAssetUpload(event)">
                     </div>
                     <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" id="asset-library"></div>
+                    <p class="text-[8px] text-slate-500 uppercase mt-1">Double-tap asset on stage to delete</p>
                 </section>
 
                 <section class="space-y-4">
@@ -132,9 +128,8 @@
                             <button onclick="resetHero()" class="bg-slate-800 p-2 rounded-xl" title="Reset Position"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
                         </div>
                     </div>
-                    <div class="text-[10px] uppercase font-bold text-slate-500 mb-1">Scale / Rotation</div>
-                    <input type="range" min="0.1" max="4" step="0.1" value="1" oninput="updateHeroScale(this.value)" class="mb-2">
-                    <input type="range" min="-180" max="180" step="1" value="0" oninput="updateHeroRotation(this.value)">
+                    <input type="range" min="0.1" max="4" step="0.1" value="1" id="scale-slider" oninput="updateHeroScale(this.value)">
+                    <input type="range" min="-180" max="180" step="1" value="0" id="rotate-slider" oninput="updateHeroRotation(this.value)">
                     
                     <div class="flex justify-between items-center mt-4">
                         <h3 class="text-cyan-400 font-black text-xs uppercase">Dialogue</h3>
@@ -147,13 +142,11 @@
                 <button onclick="takeSnap()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 py-4 rounded-2xl text-xl font-black uppercase shadow-xl active:scale-95 transition-all"><i data-lucide="camera" class="inline w-6 h-6 mr-2"></i> SNAP PANEL!</button>
             </div>
 
-            <!-- Viewport & Reel -->
             <div class="lg:col-span-9 flex flex-col gap-6">
                 <div id="viewport-frame">
                     <div id="speech-bubble" class="speech-bubble"></div>
-                    <div id="hero-container">
-                        <!-- Content Injected via JS -->
-                    </div>
+                    <!-- The grabbable container -->
+                    <div id="hero-container" onmousedown="startHeroDrag(event)" ontouchstart="startHeroDrag(event)"></div>
                     <div class="absolute bottom-8 right-10 opacity-10 font-black italic text-6xl text-white pointer-events-none uppercase font-comic">KIDOVATE</div>
                     <div id="lore-popup" class="absolute bottom-6 left-6 right-6 bg-cyan-500 text-black p-4 rounded-3xl border-4 border-black shadow-2xl hidden flex justify-between items-center z-[101]">
                         <p id="lore-text" class="font-black text-xs uppercase italic"></p>
@@ -172,7 +165,7 @@
                         </div>
                     </div>
                     <div id="strip-reel-container" class="flex gap-6 overflow-x-auto pb-6 scrollbar-hide min-h-[200px]">
-                        <div class="w-full py-16 text-center border-4 border-dashed border-slate-800 rounded-[40px] opacity-20 uppercase font-black italic">Snap your first panel above!</div>
+                        <div class="w-full py-16 text-center border-4 border-dashed border-slate-800 rounded-[40px] opacity-20 uppercase font-black italic">Snap your first panel!</div>
                     </div>
                 </div>
             </div>
@@ -182,13 +175,13 @@
         <div id="content-brag" class="hidden-tab py-24 text-center space-y-12 animate-in fade-in">
             <h2 class="text-7xl font-black text-white font-comic uppercase tracking-tighter">The Gallery</h2>
             <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                <div class="col-span-full bg-slate-900 border-4 border-dashed border-slate-800 rounded-[60px] p-20 opacity-30 italic font-black uppercase text-2xl">Your Masterpieces go here!</div>
+                <div class="col-span-full bg-slate-900 border-4 border-dashed border-slate-800 rounded-[60px] p-20 opacity-30 italic font-black uppercase text-2xl">Gallery is currently empty.</div>
             </div>
         </div>
 
         <!-- ABOUT TAB -->
         <div id="content-about" class="hidden-tab max-w-3xl mx-auto py-16 bg-slate-900 p-12 rounded-[60px] border border-slate-800 shadow-2xl space-y-6">
-            <h2 id="about-title" class="text-6xl font-black italic text-white mb-8 uppercase font-comic"></h2>
+            <h2 id="about-title" class="text-6xl font-black italic text-white mb-8 uppercase font-comic">About Kidovate</h2>
             <p id="about-desc" class="text-slate-300 font-bold leading-loose text-lg"></p>
             <div class="h-px bg-slate-800 my-8"></div>
             <p id="about-mission" class="text-cyan-500 font-black uppercase text-sm italic"></p>
@@ -196,23 +189,18 @@
     </main>
 
     <script>
-        // ==========================================
-        // 🏆 ADMIN AREA: UPDATE YOUR CONTENT HERE
-        // ==========================================
         const ADMIN_CONFIG = {
             about: {
                 title: "The Kidovate Way",
-                description: "Kidovate is about turning 3D engineering into digital magic. First, you build your Dummy 13 frame. Then, you use this studio to tell their legendary story.",
+                description: "Kidovate is about turning 3D engineering into digital magic. Build your Dummy 13 frame, then use this studio to tell their legendary story.",
                 mission: "Empowering young creators to bridge physical play and digital media."
             },
-            featuredComics: [
-                // { title: "Mission Alpha", author: "Kidovate", img: "URL_HERE" }
-            ],
+            featuredComics: [],
             ideaEngine: {
-                who: ["The Blue Guardian", "A rogue Dummy 13", "The Armor Master", "A tiny robot scout", "The Golden Hero", "Commander Frame"],
+                who: ["Blue Guardian", "Rogue Dummy 13", "Armor Master", "Robot Scout", "Golden Hero", "Commander Frame"],
                 action: ["is searching for", "just discovered", "is protecting", "wants to trade", "is practicing moves with", "is hiding from"],
-                what: ["the legendary 3D print", "a glowing micro-chip", "a pile of spare armor", "the secret instructions", "a giant human battery", "the forbidden filament"],
-                location: ["on the Moon.", "in the messy bedroom.", "inside the 3D printer.", "at the robot disco.", "in the kitchen.", "under the bed."]
+                what: ["the 3D print", "a micro-chip", "spare armor", "secret instructions", "a human battery", "forbidden filament"],
+                location: ["on the Moon.", "in the bedroom.", "inside the printer.", "at the disco.", "in the kitchen.", "under the bed."]
             }
         };
 
@@ -222,219 +210,227 @@
             { id: 'p3', svg: `<svg viewBox="0 0 100 150"><path d="M40 85 L40 125 M55 85 L95 75 L95 90 M35 50 L10 60 L20 80 M60 50 L85 40 L90 20" stroke-width="8" stroke="#06f" fill="none"/><circle cx="55" cy="30" r="10" fill="#06f"/><rect x="35" y="45" width="24" height="40" rx="4" transform="rotate(10 45 65)" fill="#000"/></svg>` }
         ];
 
-        const ASSET_LIBRARY = [
+        const ASSETS = [
             { id: 'sword', svg: `<svg viewBox="0 0 100 100"><path d="M50 10 L60 80 L50 90 L40 80 Z" fill="#94a3b8" stroke="black" stroke-width="2"/></svg>` },
             { id: 'shield', svg: `<svg viewBox="0 0 100 100"><path d="M20 20 Q50 10 80 20 L75 70 Q50 90 25 70 Z" fill="#1e293b" stroke="#06b6d4" stroke-width="4"/></svg>` },
             { id: 'pow', svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#ef4444" stroke="black" stroke-width="3"/><text x="50" y="58" text-anchor="middle" font-family="Bangers" font-size="22" fill="white" font-weight="bold">POW</text></svg>` }
         ];
 
-        // ==========================================
-        // APP STATE
-        // ==========================================
         let heroState = { scale: 1, rotation: 0, flipped: false, posX: 0, posY: 0 };
-        let panels = [];
-        let isDragging = false;
+        let isDraggingHero = false;
         let dragOffset = { x: 0, y: 0 };
+        let panels = [];
 
         function init() {
             lucide.createIcons();
+            setupColorPalette();
+            setupAssetLibrary();
             loadGallery();
             loadAbout();
-            setupColorPalette();
-            setupAssets();
             selectPose(0);
-            
-            // Global dragging events
-            window.addEventListener('mousemove', handleGlobalMove);
-            window.addEventListener('mouseup', handleGlobalEnd);
-            window.addEventListener('touchmove', handleGlobalMove, { passive: false });
-            window.addEventListener('touchend', handleGlobalEnd);
+
+            // Global move/end events for robust dragging
+            window.addEventListener('mousemove', handleMove);
+            window.addEventListener('touchmove', handleMove, { passive: false });
+            window.addEventListener('mouseup', handleEnd);
+            window.addEventListener('touchend', handleEnd);
         }
 
+        // --- NAVIGATION ---
         function switchTab(id) {
             document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-' + id).classList.add('active');
-            ['studio', 'brag', 'about'].forEach(t => document.getElementById('content-' + t).classList.add('hidden-tab'));
+            
+            document.getElementById('content-studio').classList.add('hidden-tab');
+            document.getElementById('content-brag').classList.add('hidden-tab');
+            document.getElementById('content-about').classList.add('hidden-tab');
+            
             document.getElementById('content-' + id).classList.remove('hidden-tab');
         }
 
-        // Studio Logic
-        function selectPose(idx) {
-            const container = document.getElementById('hero-container');
-            container.innerHTML = `<div style="width: 280px; height: 350px; pointer-events: none;">${HERO_POSES[idx].svg}</div>`;
-            resetHero();
-        }
-
-        function setupColorPalette() {
-            const container = document.getElementById('color-palette');
-            const STAGE_COLORS = ['#1e293b', '#000000', '#ffffff', '#ffcc00', '#ef4444', '#06b6d4'];
-            STAGE_COLORS.forEach(c => {
-                const btn = document.createElement('button');
-                btn.className = "w-6 h-6 rounded-lg border-2 border-slate-700 hover:border-white transition-all";
-                btn.style.background = c;
-                btn.onclick = () => {
-                    const frame = document.getElementById('viewport-frame');
-                    frame.style.backgroundImage = 'none';
-                    frame.style.backgroundColor = c;
-                    document.getElementById('btn-bg-clear').classList.add('hidden');
-                };
-                container.appendChild(btn);
-            });
-        }
-
-        function handleBgUpload(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const frame = document.getElementById('viewport-frame');
-                frame.style.backgroundImage = `url(${ev.target.result})`;
-                frame.style.backgroundSize = 'cover';
-                frame.style.backgroundPosition = 'center';
-                document.getElementById('btn-bg-clear').classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function clearBg() {
-            const frame = document.getElementById('viewport-frame');
-            frame.style.backgroundImage = 'none';
-            frame.style.backgroundColor = '#1e293b';
-            document.getElementById('btn-bg-clear').classList.add('hidden');
-        }
-
-        function handleHeroUpload(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const container = document.getElementById('hero-container');
-                container.innerHTML = `<img src="${ev.target.result}" class="max-w-full max-h-full drop-shadow-2xl pointer-events-none" draggable="false">`;
-                resetHero();
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function handleAssetUpload(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                addPropToStage(null, ev.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function setupAssets() {
-            const list = document.getElementById('asset-library');
-            ASSET_LIBRARY.forEach(a => {
-                const btn = document.createElement('button');
-                btn.className = "shrink-0 w-12 h-12 rounded-xl bg-black border border-slate-800 p-2 hover:border-cyan-500";
-                btn.innerHTML = a.svg;
-                btn.onclick = () => addPropToStage(a.svg);
-                list.appendChild(btn);
-            });
-        }
-
-        function addPropToStage(svg, img) {
-            const layer = document.getElementById('viewport-frame');
-            const prop = document.createElement('div');
-            prop.className = "absolute z-[45] cursor-move";
-            prop.style.width = "100px";
-            prop.style.height = "100px";
-            prop.style.top = "50%";
-            prop.style.left = "50%";
-            
-            if (svg) prop.innerHTML = svg;
-            else prop.innerHTML = `<img src="${img}" class="w-full h-full object-contain">`;
-            
-            // Basic reposition logic for props
-            prop.onmousedown = (e) => {
-                let shiftX = e.clientX - prop.getBoundingClientRect().left;
-                let shiftY = e.clientY - prop.getBoundingClientRect().top;
-                function moveAt(pageX, pageY) {
-                    prop.style.left = pageX - layer.getBoundingClientRect().left - shiftX + 'px';
-                    prop.style.top = pageY - layer.getBoundingClientRect().top - shiftY + 'px';
-                }
-                function onMouseMove(e) { moveAt(e.pageX, e.pageY); }
-                document.addEventListener('mousemove', onMouseMove);
-                prop.onmouseup = function() { document.removeEventListener('mousemove', onMouseMove); prop.onmouseup = null; };
-            };
-            prop.ondragstart = () => false;
-
-            // Delete on double tap/click
-            prop.ondblclick = () => prop.remove();
-
-            layer.appendChild(prop);
-        }
-
-        function updateHeroScale(val) { heroState.scale = val; applyTransform(); }
-        function updateHeroRotation(val) { heroState.rotation = val; applyTransform(); }
-        function flipHero() { heroState.flipped = !heroState.flipped; applyTransform(); }
-        function resetHero() { heroState = { scale: 1, rotation: 0, flipped: false, posX: 0, posY: 0 }; applyTransform(); }
-
-        function applyTransform() {
-            const container = document.getElementById('hero-container');
-            const flip = heroState.flipped ? -1 : 1;
-            container.style.transform = `translate(${heroState.posX}px, ${heroState.posY}px) scale(${heroState.scale * flip}, ${heroState.scale}) rotate(${heroState.rotation}deg)`;
-        }
-
-        // Dragging Core
-        function startDrag(e) {
-            if (!e.target.closest('#hero-container')) return;
-            isDragging = true;
+        // --- HERO DRAGGING ---
+        function startHeroDrag(e) {
+            isDraggingHero = true;
             const cx = e.touches ? e.touches[0].clientX : e.clientX;
             const cy = e.touches ? e.touches[0].clientY : e.clientY;
             dragOffset.x = cx - heroState.posX;
             dragOffset.y = cy - heroState.posY;
         }
 
-        function handleGlobalMove(e) {
-            if (!isDragging) return;
-            if (e.touches) e.preventDefault();
-            const cx = e.touches ? e.touches[0].clientX : e.clientX;
-            const cy = e.touches ? e.touches[0].clientY : e.clientY;
-            heroState.posX = cx - dragOffset.x;
-            heroState.posY = cy - dragOffset.y;
+        function handleMove(e) {
+            if (isDraggingHero) {
+                if (e.touches) e.preventDefault();
+                const cx = e.touches ? e.touches[0].clientX : e.clientX;
+                const cy = e.touches ? e.touches[0].clientY : e.clientY;
+                heroState.posX = cx - dragOffset.x;
+                heroState.posY = cy - dragOffset.y;
+                applyTransform();
+            }
+        }
+
+        function handleEnd() { isDraggingHero = false; }
+
+        function applyTransform() {
+            const el = document.getElementById('hero-container');
+            const flip = heroState.flipped ? -1 : 1;
+            el.style.transform = `translate(${heroState.posX}px, ${heroState.posY}px) scale(${heroState.scale * flip}, ${heroState.scale}) rotate(${heroState.rotation}deg)`;
+        }
+
+        // --- ASSET DRAGGING (Sticker Logic) ---
+        function addAssetToStage(svg, imgData) {
+            const frame = document.getElementById('viewport-frame');
+            const asset = document.createElement('div');
+            asset.className = "absolute cursor-move z-[50]";
+            asset.style.width = "120px";
+            asset.style.height = "120px";
+            asset.style.left = "50%";
+            asset.style.top = "50%";
+            
+            if (svg) asset.innerHTML = svg;
+            else asset.innerHTML = `<img src="${imgData}" class="w-full h-full object-contain pointer-events-none">`;
+
+            // Simple Local Drag
+            let isMoving = false;
+            let offset = { x: 0, y: 0 };
+
+            asset.onmousedown = (e) => {
+                isMoving = true;
+                const rect = asset.getBoundingClientRect();
+                offset.x = e.clientX - rect.left;
+                offset.y = e.clientY - rect.top;
+            };
+
+            window.addEventListener('mousemove', (e) => {
+                if (!isMoving) return;
+                const frameRect = frame.getBoundingClientRect();
+                asset.style.left = (e.clientX - frameRect.left - offset.x) + "px";
+                asset.style.top = (e.clientY - frameRect.top - offset.y) + "px";
+            });
+
+            window.addEventListener('mouseup', () => { isMoving = false; });
+            
+            // Delete on double click
+            asset.ondblclick = () => asset.remove();
+            frame.appendChild(asset);
+        }
+
+        // --- CONTROLS ---
+        function selectPose(idx) {
+            const container = document.getElementById('hero-container');
+            container.innerHTML = `<div style="width:100%; height:100%; pointer-events:none;">${HERO_POSES[idx].svg}</div>`;
+            resetHero();
+        }
+
+        function resetHero() {
+            heroState = { scale: 1, rotation: 0, flipped: false, posX: 0, posY: 0 };
+            document.getElementById('scale-slider').value = 1;
+            document.getElementById('rotate-slider').value = 0;
             applyTransform();
         }
 
-        function handleGlobalEnd() { isDragging = false; }
+        function updateHeroScale(v) { heroState.scale = v; applyTransform(); }
+        function updateHeroRotation(v) { heroState.rotation = v; applyTransform(); }
+        function flipHero() { heroState.flipped = !heroState.flipped; applyTransform(); }
 
-        function updateSpeech(val) {
-            const bubble = document.getElementById('speech-bubble');
-            bubble.innerText = val;
-            bubble.style.display = val.trim() ? 'block' : 'none';
+        function handleHeroUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const r = new FileReader();
+            r.onload = (ev) => {
+                const container = document.getElementById('hero-container');
+                container.innerHTML = `<img src="${ev.target.result}" class="max-w-full max-h-full drop-shadow-2xl pointer-events-none">`;
+                resetHero();
+            };
+            r.readAsDataURL(file);
+        }
+
+        function handleBgUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const r = new FileReader();
+            r.onload = (ev) => {
+                const f = document.getElementById('viewport-frame');
+                f.style.backgroundImage = `url(${ev.target.result})`;
+                f.style.backgroundSize = "cover";
+                f.style.backgroundPosition = "center";
+            };
+            r.readAsDataURL(file);
+        }
+
+        function handleAssetUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const r = new FileReader();
+            r.onload = (ev) => addAssetToStage(null, ev.target.result);
+            r.readAsDataURL(file);
+        }
+
+        function setupColorPalette() {
+            const colors = ['#1e293b', '#000000', '#ffffff', '#ffcc00', '#ef4444', '#06b6d4'];
+            const container = document.getElementById('color-palette');
+            colors.forEach(c => {
+                const b = document.createElement('button');
+                b.className = "w-6 h-6 rounded-lg border-2 border-slate-700";
+                b.style.background = c;
+                b.onclick = () => {
+                    const f = document.getElementById('viewport-frame');
+                    f.style.backgroundImage = 'none';
+                    f.style.backgroundColor = c;
+                };
+                container.appendChild(b);
+            });
+        }
+
+        function setupAssetLibrary() {
+            const list = document.getElementById('asset-library');
+            const poses = document.getElementById('hero-gallery');
+            
+            // Build Pose buttons
+            HERO_POSES.forEach((p, i) => {
+                const b = document.createElement('button');
+                b.className = "shrink-0 w-16 h-16 rounded-2xl border-2 border-slate-800 p-1 bg-black hover:border-cyan-500";
+                b.innerHTML = p.svg;
+                b.onclick = () => selectPose(i);
+                poses.appendChild(b);
+            });
+
+            // Build Asset buttons
+            ASSETS.forEach(a => {
+                const b = document.createElement('button');
+                b.className = "shrink-0 w-12 h-12 rounded-xl bg-black border border-slate-800 p-2 hover:border-cyan-500";
+                b.innerHTML = a.svg;
+                b.onclick = () => addAssetToStage(a.svg);
+                list.appendChild(b);
+            });
+        }
+
+        // --- COMIC ACTIONS ---
+        function updateSpeech(v) {
+            const b = document.getElementById('speech-bubble');
+            b.innerText = v;
+            b.style.display = v.trim() ? 'block' : 'none';
         }
 
         function speakDialogue() {
-            const txt = document.getElementById('dialogue-input').value;
-            if(!txt.trim()) return;
-            const utter = new SpeechSynthesisUtterance(txt);
-            utter.pitch = 0.5;
-            window.speechSynthesis.speak(utter);
+            const t = document.getElementById('dialogue-input').value;
+            if (!t.trim()) return;
+            const u = new SpeechSynthesisUtterance(t);
+            u.pitch = 0.5;
+            window.speechSynthesis.speak(u);
         }
-
-        function generateIdea() {
-            const p = ADMIN_CONFIG.ideaEngine;
-            const msg = `${p.who[Math.floor(Math.random()*p.who.length)]} ${p.action[Math.floor(Math.random()*p.action.length)]} ${p.what[Math.floor(Math.random()*p.what.length)]} ${p.location[Math.floor(Math.random()*p.location.length)]}`;
-            document.getElementById('lore-text').innerText = msg;
-            document.getElementById('lore-popup').classList.remove('hidden');
-        }
-        function closeLore() { document.getElementById('lore-popup').classList.add('hidden'); }
 
         async function takeSnap() {
-            const frame = document.getElementById('viewport-frame');
-            const canvas = await html2canvas(frame, { backgroundColor: null, scale: 2 });
-            const img = canvas.toDataURL("image/png");
+            const f = document.getElementById('viewport-frame');
+            const c = await html2canvas(f, { backgroundColor: null, scale: 2 });
+            const img = c.toDataURL("image/png");
             
             const reel = document.getElementById('strip-reel-container');
             if (panels.length === 0) reel.innerHTML = '';
             
-            const thumb = document.createElement('div');
-            thumb.className = "panel-thumb group";
-            thumb.innerHTML = `<img src="${img}" class="w-full h-full object-cover">`;
-            reel.appendChild(thumb);
+            const div = document.createElement('div');
+            div.className = "panel-thumb";
+            div.innerHTML = `<img src="${img}" class="w-full h-full object-cover">`;
+            reel.appendChild(div);
             panels.push(img);
             
             document.getElementById('dialogue-input').value = '';
@@ -442,55 +438,59 @@
         }
 
         async function downloadComic() {
-            if(panels.length === 0) return;
+            if (panels.length === 0) return;
             const reel = document.getElementById('strip-reel-container');
-            const canvas = await html2canvas(reel, { backgroundColor: '#000000', scale: 2 });
-            const link = document.createElement('a');
-            link.download = `Kidovate_Story_${Date.now()}.png`;
-            link.href = canvas.toDataURL("image/png");
-            link.click();
+            const c = await html2canvas(reel, { backgroundColor: '#000000', scale: 2 });
+            const l = document.createElement('a');
+            l.download = `Kidovate_Comic_${Date.now()}.png`;
+            l.href = c.toDataURL("image/png");
+            l.click();
         }
 
         function clearReel() {
-            if(confirm("Clear all panels and reset stage?")) {
+            if (confirm("Clear all panels and reset stage?")) {
                 panels = [];
-                document.getElementById('strip-reel-container').innerHTML = '<div class="w-full py-16 text-center border-4 border-dashed border-slate-800 rounded-[40px] opacity-20 uppercase font-black italic">Snap your first panel above!</div>';
+                document.getElementById('strip-reel-container').innerHTML = '<div class="w-full py-16 text-center border-4 border-dashed border-slate-800 rounded-[40px] opacity-20 uppercase font-black italic">Snap your first panel!</div>';
                 resetHero();
-                clearBg();
+                document.getElementById('viewport-frame').style.backgroundImage = 'none';
+                document.getElementById('viewport-frame').style.backgroundColor = '#1e293b';
+                // Clear any props
+                const props = document.querySelectorAll('.cursor-move.z-[50]');
+                props.forEach(p => p.remove());
             }
         }
 
+        function generateIdea() {
+            const p = ADMIN_CONFIG.ideaEngine;
+            const m = `${p.who[Math.floor(Math.random()*p.who.length)]} ${p.action[Math.floor(Math.random()*p.action.length)]} ${p.what[Math.floor(Math.random()*p.what.length)]} ${p.location[Math.floor(Math.random()*p.location.length)]}`;
+            document.getElementById('lore-text').innerText = m;
+            document.getElementById('lore-popup').classList.remove('hidden');
+        }
+
+        function closeLore() { document.getElementById('lore-popup').classList.add('hidden'); }
+
         function loadGallery() {
             const grid = document.getElementById('gallery-grid');
-            const list = document.getElementById('hero-gallery');
-            
-            HERO_POSES.forEach((p, i) => {
-                const btn = document.createElement('button');
-                btn.className = "shrink-0 w-16 h-16 rounded-2xl border-2 border-slate-800 p-1 bg-black hover:border-cyan-500 transition-all";
-                btn.innerHTML = p.svg;
-                btn.onclick = () => selectPose(i);
-                list.appendChild(btn);
-            });
-
-            if(ADMIN_CONFIG.featuredComics.length > 0) {
+            if (ADMIN_CONFIG.featuredComics.length > 0) {
                 grid.innerHTML = '';
                 ADMIN_CONFIG.featuredComics.forEach(c => {
-                    grid.innerHTML += `<div class="bg-slate-900 p-2 rounded-[40px] border-4 border-slate-800 shadow-2xl">
-                        <img src="${c.img}" class="rounded-[30px] border-2 border-black w-full">
-                        <div class="p-4 text-left"><p class="font-black uppercase text-cyan-400">${c.title}</p><p class="text-[10px] font-bold text-slate-500">By ${c.author}</p></div>
-                    </div>`;
+                    grid.innerHTML += `<div class="bg-slate-900 p-2 rounded-[40px] border-4 border-slate-800"><img src="${c.img}" class="rounded-[30px] w-full"><div class="p-4 text-left"><p class="font-black uppercase text-cyan-400">${c.title}</p><p class="text-[10px] font-bold">By ${c.author}</p></div></div>`;
                 });
             }
         }
 
         function loadAbout() {
-            const a = ADMIN_CONFIG.about;
-            document.getElementById('about-title').innerText = a.title;
-            document.getElementById('about-desc').innerText = a.description;
-            document.getElementById('about-mission').innerText = a.mission;
+            document.getElementById('about-title').innerText = ADMIN_CONFIG.about.title;
+            document.getElementById('about-desc').innerText = ADMIN_CONFIG.about.description;
+            document.getElementById('about-mission').innerText = ADMIN_CONFIG.about.mission;
         }
 
         window.onload = init;
     </script>
 </body>
 </html>
+                    
+              
+      
+       
+               
