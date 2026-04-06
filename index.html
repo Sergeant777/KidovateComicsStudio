@@ -11,7 +11,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
         .font-comic { font-family: 'Bangers', cursive; letter-spacing: 0.05em; }
-        body { background-color: #020617; color: white; font-family: sans-serif; overflow-x: hidden; touch-action: manipulation; }
+        body { background-color: #020617; color: white; font-family: sans-serif; overflow-x: hidden; touch-action: none; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         
         #viewport-frame {
@@ -26,33 +26,26 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            touch-action: none;
+            /* This is the capture area for dragging */
         }
 
-        #hero-container {
+        /* Character/Asset common style */
+        .movable {
             position: absolute;
             cursor: move;
-            z-index: 40;
-            width: 320px;
-            height: 400px;
+            user-select: none;
+            touch-action: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            pointer-events: auto;
+            transition: outline 0.2s;
         }
+        .movable:active { outline: 2px dashed #06b6d4; }
+        .movable * { pointer-events: none; }
 
-        #hero-container * { pointer-events: none; } 
-
-        .asset-sticker {
-            position: absolute;
-            cursor: move;
-            z-index: 50;
-            width: 120px;
-            height: 120px;
-            user-select: none;
-            touch-action: none;
-        }
-        .asset-sticker * { pointer-events: none; }
+        #main-hero { z-index: 40; width: 320px; height: 400px; }
+        .extra-hero { z-index: 41; width: 280px; height: 350px; }
+        .asset-sticker { z-index: 50; width: 120px; height: 120px; }
 
         .speech-bubble {
             position: absolute; top: 10%; left: 50%; transform: translateX(-50%);
@@ -105,64 +98,62 @@
     <main class="max-w-7xl mx-auto p-4">
         <!-- STUDIO TAB -->
         <div id="content-studio" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <!-- Sidebar -->
             <div class="lg:col-span-3 space-y-6 bg-slate-900 p-5 rounded-[40px] border border-slate-800 shadow-2xl h-fit">
                 <section>
                     <div class="flex justify-between items-center mb-3">
-                        <h3 class="text-cyan-400 font-black text-xs uppercase flex items-center gap-2"><i data-lucide="plus" class="w-3 h-3"></i> 1. Hero</h3>
-                        <button onclick="document.getElementById('hero-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700 hover:text-white">Upload</button>
+                        <h3 class="text-cyan-400 font-black text-xs uppercase flex items-center gap-2"><i data-lucide="plus" class="w-3 h-3"></i> 1. Characters</h3>
+                        <button onclick="document.getElementById('hero-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700 hover:text-white">Add Photo</button>
                         <input id="hero-upload" type="file" class="hidden" accept="image/*" onchange="handleHeroUpload(event)">
                     </div>
                     <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" id="hero-gallery"></div>
+                    <p class="text-[8px] text-slate-500 uppercase">Click a pose to change the primary hero</p>
                 </section>
 
                 <section class="bg-black/20 p-4 rounded-3xl border border-slate-800 space-y-4">
                     <div class="flex justify-between items-center">
                         <h3 class="text-cyan-400 font-black text-xs uppercase">2. Background</h3>
-                        <div class="flex gap-1">
-                            <button id="btn-bg-clear" onclick="clearBg()" class="hidden text-[9px] font-black uppercase bg-red-900/40 text-red-400 px-2 py-1 rounded border border-red-800"><i data-lucide="x" class="w-3 h-3"></i></button>
-                            <button onclick="document.getElementById('bg-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700"><i data-lucide="upload" class="w-3 h-3"></i></button>
-                        </div>
+                        <button onclick="document.getElementById('bg-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700"><i data-lucide="upload" class="w-3 h-3"></i></button>
+                        <input id="bg-upload" type="file" class="hidden" accept="image/*" onchange="handleBgUpload(event)">
                     </div>
                     <div class="flex gap-2 flex-wrap" id="color-palette"></div>
                 </section>
 
                 <section class="bg-black/20 p-4 rounded-3xl border border-slate-800 space-y-3">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-cyan-400 font-black text-xs uppercase">3. Assets</h3>
-                        <button onclick="document.getElementById('asset-upload').click()" class="text-[9px] font-black uppercase bg-slate-800 px-2 py-1 rounded border border-slate-700"><i data-lucide="plus" class="w-3 h-3"></i></button>
-                        <input id="asset-upload" type="file" class="hidden" accept="image/*" onchange="handleAssetUpload(event)">
-                    </div>
+                    <h3 class="text-cyan-400 font-black text-xs uppercase">3. Assets</h3>
                     <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" id="asset-library"></div>
+                    <p class="text-[8px] text-slate-500 uppercase">Double-tap anything on stage to delete</p>
                 </section>
 
                 <section class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-cyan-400 font-black text-xs uppercase">4. Controls</h3>
-                        <div class="flex gap-2">
-                            <button onclick="flipHero()" class="bg-slate-800 p-2 rounded-xl" title="Flip"><i data-lucide="flip-horizontal" class="w-4 h-4"></i></button>
-                            <button onclick="resetHero()" class="bg-slate-800 p-2 rounded-xl" title="Reset Position"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
-                        </div>
+                    <h3 class="text-cyan-400 font-black text-xs uppercase">4. Control Primary Hero</h3>
+                    <div class="flex gap-2 mb-2">
+                        <button onclick="flipHero()" class="bg-slate-800 p-2 rounded-xl flex-1 flex justify-center"><i data-lucide="flip-horizontal" class="w-4 h-4"></i></button>
+                        <button onclick="resetHero()" class="bg-slate-800 p-2 rounded-xl flex-1 flex justify-center"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>
                     </div>
-                    <input type="range" id="scale-slider" min="0.1" max="4" step="0.1" value="1" oninput="updateHeroScale(this.value)">
-                    <input type="range" id="rotate-slider" min="-180" max="180" step="1" value="0" oninput="updateHeroRotation(this.value)">
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-[8px] uppercase font-bold text-slate-500"><span>Scale</span></div>
+                        <input type="range" id="scale-slider" min="0.1" max="4" step="0.1" value="1" oninput="updateHeroScale(this.value)">
+                        <div class="flex justify-between text-[8px] uppercase font-bold text-slate-500"><span>Rotate</span></div>
+                        <input type="range" id="rotate-slider" min="-180" max="180" step="1" value="0" oninput="updateHeroRotation(this.value)">
+                    </div>
                     
                     <div class="flex justify-between items-center mt-4">
                         <h3 class="text-cyan-400 font-black text-xs uppercase">Dialogue</h3>
                         <button onclick="speakDialogue()" class="flex items-center gap-1 text-[9px] font-black uppercase px-2 py-1 rounded border bg-slate-800 border-slate-700 text-slate-400"><i data-lucide="volume-2" class="w-3 h-3"></i> Speak</button>
                     </div>
-                    <textarea id="dialogue-input" oninput="updateSpeech(this.value)" placeholder="SAY SOMETHING..." class="w-full bg-black border-2 border-slate-800 rounded-2xl p-3 text-sm font-black uppercase text-white outline-none h-16 resize-none"></textarea>
+                    <textarea id="dialogue-input" oninput="updateSpeech(this.value)" placeholder="WHAM! POW! SAY SOMETHING..." class="w-full bg-black border-2 border-slate-800 rounded-2xl p-3 text-sm font-black uppercase text-white outline-none h-16 resize-none"></textarea>
                 </section>
 
                 <button onclick="generateIdea()" class="w-full bg-slate-800 py-3 rounded-2xl text-[10px] font-black uppercase border border-slate-700">💡 Idea Engine</button>
                 <button onclick="takeSnap()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 py-4 rounded-2xl text-xl font-black uppercase shadow-xl active:scale-95 transition-all"><i data-lucide="camera" class="inline w-6 h-6 mr-2"></i> SNAP PANEL!</button>
             </div>
 
-            <!-- Viewport & Reel -->
             <div class="lg:col-span-9 flex flex-col gap-6">
-                <div id="viewport-frame" onpointerdown="handleFrameClick(event)">
+                <div id="viewport-frame" onpointerdown="handleStagePointerDown(event)">
                     <div id="speech-bubble" class="speech-bubble"></div>
-                    <div id="hero-container"></div>
+                    <div id="hero-container" class="movable" style="left:0; top:0;">
+                        <!-- Primary Hero -->
+                    </div>
                     <div class="absolute bottom-8 right-10 opacity-10 font-black italic text-6xl text-white pointer-events-none uppercase font-comic">KIDOVATE</div>
                     <div id="lore-popup" class="absolute bottom-6 left-6 right-6 bg-cyan-500 text-black p-4 rounded-3xl border-4 border-black shadow-2xl hidden flex justify-between items-center z-[101]">
                         <p id="lore-text" class="font-black text-xs uppercase italic"></p>
@@ -174,9 +165,9 @@
                     <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8">
                         <h4 class="font-black uppercase tracking-widest text-sm text-emerald-500 italic">COMIC STRIP REEL</h4>
                         <div class="flex gap-2">
-                            <button onclick="clearReel()" class="text-[10px] font-black text-red-500 uppercase px-4 py-3 hover:bg-red-500/10 rounded-2xl transition-colors">Clear</button>
+                            <button onclick="clearReel()" class="text-[10px] font-black text-red-500 uppercase px-4 py-3 hover:bg-red-500/10 rounded-2xl">Reset</button>
                             <button onclick="downloadComic()" class="bg-slate-800 hover:bg-slate-700 px-4 py-3 rounded-2xl text-[10px] font-black uppercase border border-slate-700 flex items-center gap-2">
-                                <i data-lucide="download" class="w-3 h-3"></i> Save Image
+                                <i data-lucide="download" class="w-3 h-3"></i> Save
                             </button>
                             <button onclick="shareComic()" class="bg-blue-600 hover:bg-blue-500 px-6 py-3 rounded-2xl text-[10px] font-black uppercase shadow-xl flex items-center gap-2 transition-all active:scale-95">
                                 <i data-lucide="share-2" class="w-4 h-4"></i> Share Story
@@ -184,7 +175,7 @@
                         </div>
                     </div>
                     <div id="strip-reel-container" class="flex gap-6 overflow-x-auto pb-6 scrollbar-hide min-h-[200px]">
-                        <div class="w-full py-16 text-center border-4 border-dashed border-slate-800 rounded-[40px] opacity-20 uppercase font-black italic">Snap your first panel!</div>
+                        <div id="empty-msg" class="w-full py-16 text-center border-4 border-dashed border-slate-800 rounded-[40px] opacity-20 uppercase font-black italic">Snap your first panel!</div>
                     </div>
                 </div>
             </div>
@@ -193,14 +184,12 @@
         <!-- GALLERY TAB -->
         <div id="content-brag" class="hidden-tab py-24 text-center space-y-12 animate-in fade-in">
             <h2 class="text-7xl font-black text-white font-comic uppercase tracking-tighter">The Gallery</h2>
-            <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-                <div class="col-span-full bg-slate-900 border-4 border-dashed border-slate-800 rounded-[60px] p-20 opacity-30 italic font-black uppercase text-2xl">Gallery is currently empty.</div>
-            </div>
+            <div id="gallery-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
         </div>
 
         <!-- ABOUT TAB -->
         <div id="content-about" class="hidden-tab max-w-3xl mx-auto py-16 bg-slate-900 p-12 rounded-[60px] border border-slate-800 shadow-2xl space-y-6">
-            <h2 id="about-title" class="text-6xl font-black italic text-white mb-8 uppercase font-comic">About Kidovate</h2>
+            <h2 id="about-title" class="text-6xl font-black italic text-white mb-8 uppercase font-comic"></h2>
             <p id="about-desc" class="text-slate-300 font-bold leading-loose text-lg"></p>
             <div class="h-px bg-slate-800 my-8"></div>
             <p id="about-mission" class="text-cyan-500 font-black uppercase text-sm italic"></p>
@@ -214,7 +203,9 @@
                 description: "Kidovate is the home for Dummy 13 creators. We believe that building the physical toy is only the first half of the fun. This studio is where your builds come to life.",
                 mission: "Empowering young engineers to become digital storytellers."
             },
-            featuredComics: [],
+            featuredComics: [
+                { title: "Sample Mission", author: "Kidovate Team", img: "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?auto=format&fit=crop&q=80&w=400" }
+            ],
             ideaEngine: {
                 who: ["Blue Guardian", "Rogue Dummy 13", "Armor Master", "Robot Scout", "Golden Hero", "Commander Frame"],
                 action: ["is searching for", "just discovered", "is protecting", "wants to trade", "is practicing moves with", "is hiding from"],
@@ -235,9 +226,9 @@
             { id: 'pow', svg: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#ef4444" stroke="black" stroke-width="3"/><text x="50" y="58" text-anchor="middle" font-family="Bangers" font-size="22" fill="white" font-weight="bold">POW</text></svg>` }
         ];
 
-        // --- GLOBAL APP STATE ---
+        // --- STATE ---
         let heroState = { scale: 1, rotation: 0, flipped: false, posX: 0, posY: 0 };
-        let activeDragItem = null;
+        let activeDrag = null;
         let dragOffset = { x: 0, y: 0 };
         let panels = [];
 
@@ -249,78 +240,89 @@
             loadAbout();
             selectPose(0);
 
+            // Global pointer listeners
             window.addEventListener('pointermove', handlePointerMove);
             window.addEventListener('pointerup', handlePointerUp);
         }
 
-        // --- NAVIGATION ---
         function switchTab(id) {
             document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
             document.getElementById('tab-' + id).classList.add('active');
-            
-            document.getElementById('content-studio').classList.add('hidden-tab');
-            document.getElementById('content-brag').classList.add('hidden-tab');
-            document.getElementById('content-about').classList.add('hidden-tab');
-            
+            ['studio', 'brag', 'about'].forEach(t => document.getElementById('content-' + t).classList.add('hidden-tab'));
             document.getElementById('content-' + id).classList.remove('hidden-tab');
         }
 
-        // --- DRAGGING ENGINE ---
-        function handleFrameClick(e) {
-            const targetAsset = e.target.closest('.asset-sticker');
-            const targetHero = e.target.closest('#hero-container');
-            
-            if (targetAsset) {
-                activeDragItem = { type: 'asset', el: targetAsset };
-            } else if (targetHero) {
-                activeDragItem = { type: 'hero', el: targetHero };
-            } else {
-                return;
-            }
-
-            const cx = e.clientX || (e.touches && e.touches[0].clientX);
-            const cy = e.clientY || (e.touches && e.touches[0].clientY);
-
-            if (activeDragItem.type === 'hero') {
-                dragOffset.x = cx - heroState.posX;
-                dragOffset.y = cy - heroState.posY;
-            } else {
-                const rect = activeDragItem.el.getBoundingClientRect();
-                dragOffset.x = cx - rect.left;
-                dragOffset.y = cy - rect.top;
-            }
-        }
-
-        function handlePointerMove(e) {
-            if (!activeDragItem) return;
-            const cx = e.clientX || (e.touches && e.touches[0].clientX);
-            const cy = e.clientY || (e.touches && e.touches[0].clientY);
-
-            if (activeDragItem.type === 'hero') {
-                heroState.posX = cx - dragOffset.x;
-                heroState.posY = cy - dragOffset.y;
-                applyHeroTransform();
-            } else {
-                const frameRect = document.getElementById('viewport-frame').getBoundingClientRect();
-                activeDragItem.el.style.left = (cx - frameRect.left - dragOffset.x) + "px";
-                activeDragItem.el.style.top = (cy - frameRect.top - dragOffset.y) + "px";
-            }
-        }
-
-        function handlePointerUp() { activeDragItem = null; }
-
-        function applyHeroTransform() {
-            const el = document.getElementById('hero-container');
-            if (!el) return;
-            const flip = heroState.flipped ? -1 : 1;
-            el.style.transform = `translate(${heroState.posX}px, ${heroState.posY}px) scale(${heroState.scale * flip}, ${heroState.scale}) rotate(${heroState.rotation}deg)`;
-        }
-
-        // --- STUDIO HELPERS ---
+        // --- CHARACTER LOGIC ---
         function selectPose(idx) {
             const container = document.getElementById('hero-container');
             container.innerHTML = `<div style="width:100%; height:100%; pointer-events:none;">${HERO_POSES[idx].svg}</div>`;
             resetHero();
+        }
+
+        function handleHeroUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const r = new FileReader();
+            r.onload = (ev) => {
+                const frame = document.getElementById('viewport-frame');
+                const char = document.createElement('div');
+                char.className = "movable extra-hero";
+                char.style.left = "30%";
+                char.style.top = "30%";
+                char.innerHTML = `<img src="${ev.target.result}" class="max-w-full max-h-full drop-shadow-2xl">`;
+                char.ondblclick = () => char.remove();
+                frame.appendChild(char);
+            };
+            r.readAsDataURL(file);
+        }
+
+        // --- DRAGGING ENGINE ---
+        function handleStagePointerDown(e) {
+            const target = e.target.closest('.movable') || e.target.closest('#hero-container');
+            if (!target) return;
+
+            activeDrag = target;
+            const cx = e.clientX;
+            const cy = e.clientY;
+
+            if (target.id === 'hero-container') {
+                dragOffset.x = cx - heroState.posX;
+                dragOffset.y = cy - heroState.posY;
+            } else {
+                const rect = target.getBoundingClientRect();
+                dragOffset.x = cx - rect.left;
+                dragOffset.y = cy - rect.top;
+            }
+            target.setPointerCapture(e.pointerId);
+        }
+
+        function handlePointerMove(e) {
+            if (!activeDrag) return;
+            const cx = e.clientX;
+            const cy = e.clientY;
+
+            if (activeDrag.id === 'hero-container') {
+                heroState.posX = cx - dragOffset.x;
+                heroState.posY = cy - dragOffset.y;
+                applyHeroTransform();
+            } else {
+                const frame = document.getElementById('viewport-frame').getBoundingClientRect();
+                activeDrag.style.left = (cx - frame.left - dragOffset.x) + "px";
+                activeDrag.style.top = (cy - frame.top - dragOffset.y) + "px";
+            }
+        }
+
+        function handlePointerUp(e) {
+            if (activeDrag) {
+                activeDrag.releasePointerCapture(e.pointerId);
+                activeDrag = null;
+            }
+        }
+
+        function applyHeroTransform() {
+            const el = document.getElementById('hero-container');
+            const flip = heroState.flipped ? -1 : 1;
+            el.style.transform = `translate(${heroState.posX}px, ${heroState.posY}px) scale(${heroState.scale * flip}, ${heroState.scale}) rotate(${heroState.rotation}deg)`;
         }
 
         function resetHero() {
@@ -334,57 +336,34 @@
         function updateHeroRotation(v) { heroState.rotation = v; applyHeroTransform(); }
         function flipHero() { heroState.flipped = !heroState.flipped; applyHeroTransform(); }
 
-        function handleHeroUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const r = new FileReader();
-            r.onload = (ev) => {
-                document.getElementById('hero-container').innerHTML = `<img src="${ev.target.result}" class="max-w-full max-h-full drop-shadow-2xl">`;
-                resetHero();
-            };
-            r.readAsDataURL(file);
+        // --- ASSETS & BACKGROUND ---
+        function setupAssetLibrary() {
+            const library = document.getElementById('asset-library');
+            const gallery = document.getElementById('hero-gallery');
+            HERO_POSES.forEach((p, i) => {
+                const b = document.createElement('button');
+                b.className = "shrink-0 w-16 h-16 rounded-2xl border-2 border-slate-800 p-1 bg-black";
+                b.innerHTML = p.svg;
+                b.onclick = () => selectPose(i);
+                gallery.appendChild(b);
+            });
+            ASSETS.forEach(a => {
+                const b = document.createElement('button');
+                b.className = "shrink-0 w-12 h-12 rounded-xl bg-black border border-slate-800 p-2 hover:border-cyan-500";
+                b.innerHTML = a.svg;
+                b.onclick = () => {
+                    const f = document.getElementById('viewport-frame');
+                    const sticker = document.createElement('div');
+                    sticker.className = "movable asset-sticker";
+                    sticker.style.left = "40%"; sticker.style.top = "40%";
+                    sticker.innerHTML = a.svg;
+                    sticker.ondblclick = () => sticker.remove();
+                    f.appendChild(sticker);
+                };
+                library.appendChild(b);
+            });
         }
 
-        function handleAssetUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const r = new FileReader();
-            r.onload = (ev) => addAssetToStage(null, ev.target.result);
-            r.readAsDataURL(file);
-        }
-
-        function addAssetToStage(svg, imgData) {
-            const frame = document.getElementById('viewport-frame');
-            const asset = document.createElement('div');
-            asset.className = "asset-sticker";
-            asset.style.left = "40%";
-            asset.style.top = "40%";
-            if (svg) asset.innerHTML = svg;
-            else asset.innerHTML = `<img src="${imgData}" class="w-full h-full object-contain">`;
-            asset.ondblclick = () => asset.remove();
-            frame.appendChild(asset);
-        }
-
-        function handleBgUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const r = new FileReader();
-            r.onload = (ev) => {
-                const f = document.getElementById('viewport-frame');
-                f.style.backgroundImage = `url(${ev.target.result})`;
-                f.style.backgroundSize = "cover";
-                f.style.backgroundPosition = "center";
-            };
-            r.readAsDataURL(file);
-        }
-
-        function clearBg() {
-            const f = document.getElementById('viewport-frame');
-            f.style.backgroundImage = 'none';
-            f.style.backgroundColor = '#1e293b';
-        }
-
-        // --- UI LOADING ---
         function setupColorPalette() {
             const colors = ['#1e293b', '#000000', '#ffffff', '#ffcc00', '#ef4444', '#06b6d4'];
             const container = document.getElementById('color-palette');
@@ -396,43 +375,46 @@
                     const f = document.getElementById('viewport-frame');
                     f.style.backgroundImage = 'none';
                     f.style.backgroundColor = c;
+                    document.getElementById('btn-bg-clear').classList.add('hidden');
                 };
                 container.appendChild(b);
             });
         }
 
-        function setupAssetLibrary() {
-            const library = document.getElementById('asset-library');
-            const poses = document.getElementById('hero-gallery');
-            HERO_POSES.forEach((p, i) => {
-                const b = document.createElement('button');
-                b.className = "shrink-0 w-16 h-16 rounded-2xl border-2 border-slate-800 p-1 bg-black";
-                b.innerHTML = p.svg;
-                b.onclick = () => selectPose(i);
-                poses.appendChild(b);
-            });
-            ASSETS.forEach(a => {
-                const b = document.createElement('button');
-                b.className = "shrink-0 w-12 h-12 rounded-xl bg-black border border-slate-800 p-2";
-                b.innerHTML = a.svg;
-                b.onclick = () => addAssetToStage(a.svg);
-                library.appendChild(b);
-            });
+        function handleBgUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const r = new FileReader();
+            r.onload = (ev) => {
+                const f = document.getElementById('viewport-frame');
+                f.style.backgroundImage = `url(${ev.target.result})`;
+                f.style.backgroundSize = "cover";
+                f.style.backgroundPosition = "center";
+                document.getElementById('btn-bg-clear').classList.remove('hidden');
+            };
+            r.readAsDataURL(file);
         }
 
-        // --- ACTIONS ---
+        function clearBg() {
+            const f = document.getElementById('viewport-frame');
+            f.style.backgroundImage = 'none';
+            f.style.backgroundColor = '#1e293b';
+            document.getElementById('btn-bg-clear').classList.add('hidden');
+        }
+
+        // --- COMIC ACTIONS ---
+        function updateSpeech(v) {
+            const b = document.getElementById('speech-bubble');
+            b.innerText = v;
+            b.style.display = v.trim() ? 'block' : 'none';
+        }
+
         function speakDialogue() {
             const t = document.getElementById('dialogue-input').value;
             if (!t.trim()) return;
             const u = new SpeechSynthesisUtterance(t);
             u.pitch = 0.5;
             window.speechSynthesis.speak(u);
-        }
-
-        function updateSpeech(v) {
-            const b = document.getElementById('speech-bubble');
-            b.innerText = v;
-            b.style.display = v.trim() ? 'block' : 'none';
         }
 
         async function takeSnap() {
@@ -455,7 +437,7 @@
             const reel = document.getElementById('strip-reel-container');
             const c = await html2canvas(reel, { backgroundColor: '#000000', scale: 2 });
             const l = document.createElement('a');
-            l.download = `Kidovate_Comic_${Date.now()}.png`;
+            l.download = `Kidovate_Story_${Date.now()}.png`;
             l.href = c.toDataURL("image/png");
             l.click();
         }
@@ -472,24 +454,20 @@
                 try {
                     await navigator.share({
                         files: [file],
-                        title: 'Check out my Kidovate Comic!',
-                        text: 'I built this with Dummy 13 and Kidovate Studio.'
+                        title: 'Kidovate Comic Drop!',
+                        text: 'Look what I built with Kidovate Studio!'
                     });
-                } catch (err) {
-                    console.error("Share failed", err);
-                }
-            } else {
-                downloadComic();
-            }
+                } catch (err) { console.error(err); }
+            } else { downloadComic(); }
         }
 
         function clearReel() {
-            if (confirm("Reset everything?")) {
+            if (confirm("Reset the entire stage?")) {
                 panels = [];
-                document.getElementById('strip-reel-container').innerHTML = '<div class="w-full py-16 text-center border-4 border-dashed border-slate-800 rounded-[40px] opacity-20 uppercase font-black italic">Snap your first panel!</div>';
+                document.getElementById('strip-reel-container').innerHTML = '<div id="empty-msg" class="w-full py-16 text-center border-4 border-dashed border-slate-800 rounded-[40px] opacity-20 uppercase font-black italic">Snap your first panel!</div>';
                 resetHero();
                 clearBg();
-                document.querySelectorAll('.asset-sticker').forEach(a => a.remove());
+                document.querySelectorAll('.movable.extra-hero, .movable.asset-sticker').forEach(a => a.remove());
             }
         }
 
@@ -507,7 +485,7 @@
             if (ADMIN_CONFIG.featuredComics.length > 0) {
                 grid.innerHTML = '';
                 ADMIN_CONFIG.featuredComics.forEach(c => {
-                    grid.innerHTML += `<div class="bg-slate-900 p-2 rounded-[40px] border-4 border-slate-800"><img src="${c.img}" class="rounded-[30px] w-full"><div class="p-4 text-left"><p class="font-black uppercase text-cyan-400">${c.title}</p><p class="text-[10px] font-bold">By ${c.author}</p></div></div>`;
+                    grid.innerHTML += `<div class="bg-slate-900 p-2 rounded-[40px] border-4 border-slate-800 shadow-2xl"><img src="${c.img}" class="rounded-[30px] w-full"><div class="p-4 text-left"><p class="font-black uppercase text-cyan-400">${c.title}</p><p class="text-[10px] font-bold">By ${c.author}</p></div></div>`;
                 });
             }
         }
@@ -522,9 +500,3 @@
     </script>
 </body>
 </html>
-                
-           
-     
-      
-       
-               
